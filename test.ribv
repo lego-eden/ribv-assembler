@@ -1,7 +1,11 @@
 addi x2, x0, 127
+
+# Här kanske det är lämpligt att skriva dokumentation
 reset: # Detta är en kommentar
 add x30, x0, x0
+
 continue:
 addi x30, x30, 1 # Här är en till
+
 beq x30, x2, reset
 beq x0, x0, continue

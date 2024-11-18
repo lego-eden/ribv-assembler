@@ -144,7 +144,7 @@ def parseProgram(lines: IndexedSeq[String]): String =
             case _ =>
               innerLines.updated(index, tail)
           (lookup + (label.strip -> index), updatedAcc)
-        case s"" => (lookup, innerLines.patch(index, Nil, 1))
+        case s"" | s"#$_" => (lookup, innerLines.patch(index, Nil, 1))
         case _   => acc
 
   newLines
