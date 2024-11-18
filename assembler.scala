@@ -63,7 +63,7 @@ object Inst:
 def reg(s: String): Int = s.tail.toInt
 
 def parseLine(line: String): (Inst, Int, Int, String) =
-  line match
+  line.strip match
     case s"$inst $arg1 $arg2 $tail" =>
       val arg3 = tail match
         case s"$arg3#$comment" => arg3
@@ -130,7 +130,12 @@ def parseProgram(lines: IndexedSeq[String]): String =
         case s"$label:" =>
           (lookup + (label.strip -> (index + 1)), innerLines.patch(index, Nil, 1))
         case s"$label:$tail" =>
-          (lookup + (label.strip -> index), innerLines.updated(index, tail))
+          val updatedAcc = tail.strip match
+            case s"#$_" =>
+              innerLines.patch(index, Nil, 1)
+            case _ =>
+              innerLines.updated(index, tail)
+          (lookup + (label.strip -> index), updatedAcc)
         case s"" => (lookup, innerLines.patch(index, Nil, 1))
         case _ => acc
   
