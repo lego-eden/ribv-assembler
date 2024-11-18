@@ -6,7 +6,8 @@ extension (i: Int)
 
 extension (s: String)
   def parseBinary: Int =
-    s.reverse.padTo(32, s(0))
+    s.reverse
+      .padTo(32, s(0))
       .zipWithIndex
       .map((c, i) => c.toString.toInt << i)
       .sum
@@ -40,19 +41,19 @@ enum Inst:
 
   lazy val funct3: String =
     this match
-      case Add  | Sub  | Addi | Jalr | Beq => "000"
-      case Sll  | Slli | Bne               => "001"
-      case Slt  | Slti                     => "010"
-      case Sltu | Sltiu                    => "011"
-      case Xor  | Xori | Blt               => "100"
-      case Srl  | Sra  | Srli | Srai | Bge => "101"
-      case Or   | Ori  | Bltu              => "110"
-      case And  | Andi | Bgeu              => "111"
+      case Add | Sub | Addi | Jalr | Beq => "000"
+      case Sll | Slli | Bne              => "001"
+      case Slt | Slti                    => "010"
+      case Sltu | Sltiu                  => "011"
+      case Xor | Xori | Blt              => "100"
+      case Srl | Sra | Srli | Srai | Bge => "101"
+      case Or | Ori | Bltu               => "110"
+      case And | Andi | Bgeu             => "111"
 
   lazy val funct7: String =
     this match
       case Sub | Sra | Srai => "0100000"
-      case _ => "0000000"
+      case _                => "0000000"
 
 end Inst
 
@@ -67,10 +68,12 @@ def parseLine(line: String): (Inst, Int, Int, String) =
     case s"$inst $arg1 $arg2 $tail" =>
       val arg3 = tail match
         case s"$arg3#$comment" => arg3
-        case arg3 => arg3
+        case arg3              => arg3
       (Inst(inst.strip), reg(arg1.strip), reg(arg2.strip), arg3.strip)
     case _ =>
-      throw new IllegalArgumentException(s"The line could not be parsed:\n    $line")
+      throw new IllegalArgumentException(
+        s"The line could not be parsed:\n    $line"
+      )
 
 def parseArg3(
     lookupLabel: Map[String, Int]
@@ -96,7 +99,7 @@ def toHex(instTuple: (Inst, Int, Int, Int)): String =
   val op = inst.op
 
   val bin = inst.typ match
-    case Typ.R => 
+    case Typ.R =>
       val rd = arg1.bin(5)
       val rs1 = arg2.bin(5)
       val rs2 = arg3.bin(5)
@@ -119,16 +122,21 @@ def toHex(instTuple: (Inst, Int, Int, Int)): String =
   assert(bin.size == 32, s"The instruction is not 32 bits:\n    $instTuple")
   bin.parseBinary.toHexString.reverse.padTo(8, '0').reverse
 end toHex
-  
+
 def parseProgram(lines: IndexedSeq[String]): String =
   val (lookupLabel, newLines) =
-    lines.indices.foldLeft((Map.empty[String, Int], lines.map(_.replaceAll(",", "")))): (acc, i) =>
+    lines.indices.foldLeft(
+      (Map.empty[String, Int], lines.map(_.replaceAll(",", "")))
+    ): (acc, i) =>
       val (lookup, innerLines) = acc
       val offset = lines.size - innerLines.size
       val index = i - offset
       innerLines(index).strip match
         case s"$label:" =>
-          (lookup + (label.strip -> (index + 1)), innerLines.patch(index, Nil, 1))
+          (
+            lookup + (label.strip -> (index + 1)),
+            innerLines.patch(index, Nil, 1)
+          )
         case s"$label:$tail" =>
           val updatedAcc = tail.strip match
             case s"#$_" =>
@@ -137,8 +145,8 @@ def parseProgram(lines: IndexedSeq[String]): String =
               innerLines.updated(index, tail)
           (lookup + (label.strip -> index), updatedAcc)
         case s"" => (lookup, innerLines.patch(index, Nil, 1))
-        case _ => acc
-  
+        case _   => acc
+
   newLines
     .map(parseLine)
     .zipWithIndex
@@ -149,5 +157,5 @@ def parseProgram(lines: IndexedSeq[String]): String =
 @main
 def main(filePath: String): Unit =
   val wd = os.pwd
-  val program = parseProgram(os.read.lines(wd/filePath))
+  val program = parseProgram(os.read.lines(wd / filePath))
   println(program)
