@@ -6,11 +6,10 @@ extension (i: Int)
 
 extension (s: String)
   def parseBinary: Int =
-    s.reverse
-      .padTo(32, s(0))
-      .zipWithIndex
-      .map((c, i) => c.toString.toInt << i)
-      .sum
+    s.reverse.zipWithIndex.map((c, i) => c.toString.toInt << i).sum
+
+  def parseHex: Int =
+    Integer.parseInt(s, 16)
 
 enum Typ:
   case R, I, B
@@ -59,9 +58,15 @@ end Inst
 
 object Inst:
   def apply(s: String): Inst =
-    Inst.values.find(_.toString.toLowerCase == s.toLowerCase).get
+    Inst.valueOf(s.toLowerCase.capitalize)
 
 def reg(s: String): Int = s.tail.toInt
+def imm(s: String): Int =
+  s match
+    case s"0b$num" => num.parseBinary
+    case s"0x$num" => num.parseHex
+    case num => num.toInt
+  
 
 def parseLine(line: String): (Inst, Int, Int, String) =
   line.strip match
@@ -86,7 +91,8 @@ def parseArg3(
     case Typ.R =>
       reg(arg3)
     case Typ.I =>
-      arg3.toInt
+      if inst == Inst.Jalr then lookupLabel.getOrElse(arg3, imm(arg3))
+      else imm(arg3)
     case Typ.B =>
       val line = lookupLabel(arg3)
       (line - index) * 4
